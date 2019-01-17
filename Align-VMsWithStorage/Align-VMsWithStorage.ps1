@@ -24,8 +24,8 @@
 		Website: http://www.DarrylvanderPeijl.nl/
 		Email: DarrylvanderPeijl@outlook.com
 		Date created: 31.december.2018
-		Last modified: 9.january.2019
-		Version: 0.9.2
+		Last modified: 17.january.2019
+		Version: 0.9.3
 
  
 	.LINK
@@ -109,12 +109,33 @@
 
         $CSVhash = @{}
         Foreach ($Clustersharedvolume in $Clustersharedvolumes) {
+            $Matches = $null
             #Extract the CSV volume names from cluster resource name
             $Null = $Clustersharedvolume.name -match ".*?\((.*?)\)" 
+            if ($Matches) {
+                $CSVname = $($Matches[1])
+                Write-Verbose -Message "Regex matched and found $CSVname"
 
-            Write-Verbose -Message "Gathering information of CSV $($Matches[1])"
+            }else {
+                Write-Verbose -Message "Regex did not match, probably renamed CSV"
+                $CSVname = $Clustersharedvolume.name
+                $FirstClusternode = $clusternodes[0].Name
 
-            $CSVhash[($Clustersharedvolume.Id).ToString()] = @($Matches[1], $Clustersharedvolume.OwnerNode.Name, $Clustersharedvolume.SharedVolumeInfo.FriendlyVolumeName)
+                Write-Verbose -Message "Checking if virtualdisk with name $CSVname exist on $FirstClusternode"
+                If ((Get-VirtualDisk $CSVname -CimSession $FirstClusternode))
+                    {
+                    Write-Verbose -Message "virtualdisk with name $CSVname exist on $FirstClusternode"
+                }else{
+                 Throw "Cannot find CSV with name $CSVname, something is wrong. Exitting."
+                 Exit
+                }
+                 
+
+            }
+
+            Write-Verbose -Message "Gathering information of CSV $CSVname"
+
+            $CSVhash[($Clustersharedvolume.Id).ToString()] = @($CSVname, $Clustersharedvolume.OwnerNode.Name, $Clustersharedvolume.SharedVolumeInfo.FriendlyVolumeName)
         }
 
 
@@ -125,7 +146,8 @@
         $VMhash = @{}
 
         Foreach ($clusternode in $clusternodes) {
-            $VMs += Get-VM -ComputerName $clusternode
+            $VMs = $null
+            [array]$VMs += Get-VM -ComputerName $clusternode
         }
         Foreach ($VM in $VMs) {
         
