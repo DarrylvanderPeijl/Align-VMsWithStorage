@@ -144,9 +144,8 @@
         ## exclude VMs with disks on multiple CSVs (for now?)
 
         $VMhash = @{}
-
+	$VMs = $null
         Foreach ($clusternode in $clusternodes) {
-            $VMs = $null
             [array]$VMs += Get-VM -ComputerName $clusternode
         }
         Foreach ($VM in $VMs) {
