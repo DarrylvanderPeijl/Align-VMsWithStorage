@@ -221,7 +221,7 @@
 
             Write-Verbose -Message "$targetnode has $NodeFreeMem of free physical memory,$VMname needs $VMmem"
 
-            If (($NodeFreeMem + $NodePhysicalmemorybufferGB) -gt $VMmem) {
+            If (($NodeFreeMem - $NodePhysicalmemorybufferGB) -gt $VMmem) {
                 Write-Verbose -Message "$targetnode has enough resources to host $VMname"
                         
                 if ($VMstate -eq "Off" -or $Quickmigration -eq $true) {
